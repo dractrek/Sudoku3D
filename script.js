@@ -7,6 +7,7 @@ const settingsContent = document.getElementById('settings-content');
 const toggleSettingsButton = document.getElementById('toggle-settings');
 const colorNumbersToggle = document.getElementById('color-numbers-toggle');
 const newGameButton = document.getElementById('new-game');
+const digitTrackerElement = document.getElementById('digit-tracker');
 
 const faceConfigs = [
   { key: 'front', label: 'Davant', className: 'face--front', coords: (row, col) => ({ x: col, y: row, z: 2 }) },
@@ -166,7 +167,43 @@ function getFaceValues(faceConfig) {
   return values;
 }
 
+function getDigitUsage() {
+  const counts = new Map(Array.from({ length: 9 }, (_, index) => [String(index + 1), 0]));
+
+  faceConfigs.forEach((faceConfig) => {
+    getFaceValues(faceConfig).forEach((value) => {
+      if (!value) return;
+      const key = String(value);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+  });
+
+  return counts;
+}
+
+function renderDigitTracker() {
+  const usage = getDigitUsage();
+  digitTrackerElement.innerHTML = '';
+
+  Array.from({ length: 9 }, (_, index) => String(index + 1)).forEach((digit) => {
+    const count = usage.get(digit) ?? 0;
+    const remaining = Math.max(0, 6 - count);
+    const chip = document.createElement('article');
+    chip.className = 'digit-chip';
+    if (count >= 6) chip.classList.add('is-complete');
+    chip.innerHTML = `
+      <div class="digit-chip__top">
+        <span class="digit-chip__number" data-digit="${digit}">${digit}</span>
+        <span class="digit-chip__count">${count}/6</span>
+      </div>
+      <span class="digit-chip__status">${remaining === 0 ? 'Complet' : `Falten ${remaining}`}</span>
+    `;
+    digitTrackerElement.appendChild(chip);
+  });
+}
+
 function validateBoard() {
+  renderDigitTracker();
   cellRegistry.forEach((cells) => cells.forEach((cell) => {
     cell.dataset.invalid = 'false';
     cell.classList.remove('invalid');

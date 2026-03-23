@@ -55,7 +55,8 @@ h2 { margin: 0; }
 p, li { color: var(--muted); line-height: 1.6; }
 .feature-list { display: grid; gap: 1rem; margin: 1.5rem 0; }
 .feature-list article,
-.settings-panel {
+.settings-panel,
+.tracker-panel {
   padding: 1rem 1.1rem;
   border-radius: 16px;
   background: rgba(15, 35, 60, .72);
@@ -63,6 +64,26 @@ p, li { color: var(--muted); line-height: 1.6; }
 }
 .feature-list h2 { margin-top: 0; font-size: 1rem; }
 .settings-panel { margin-bottom: 1.4rem; }
+.tracker-panel { margin-bottom: 1.4rem; }
+.tracker-heading { align-items: flex-start; }
+.tracker-note { margin: 0; max-width: 12rem; font-size: .9rem; text-align: right; }
+.digit-tracker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+.digit-chip {
+  border: 1px solid rgba(157,199,255,.12);
+  border-radius: 16px;
+  padding: .8rem;
+  background: rgba(7, 18, 32, .55);
+  display: grid;
+  gap: .2rem;
+}
+.digit-chip__top { display: flex; align-items: baseline; justify-content: space-between; gap: .4rem; }
+.digit-chip__number { font-size: 1.35rem; font-weight: 800; color: var(--text); }
+.digit-chip__count { font-size: .86rem; color: var(--muted); }
+.digit-chip__status { font-size: .82rem; color: var(--accent); }
+.digit-chip.is-complete { opacity: .78; background: rgba(148, 163, 184, .16); }
+.digit-chip.is-complete .digit-chip__number,
+.digit-chip.is-complete .digit-chip__count,
+.digit-chip.is-complete .digit-chip__status { color: #94a3b8; }
 .settings-heading {
   display: flex;
   justify-content: space-between;
@@ -203,6 +224,15 @@ body.numbers-colored .cell[data-digit='7'] { color: var(--digit-7); }
 body.numbers-colored .cell[data-digit='8'] { color: var(--digit-8); }
 body.numbers-colored .cell[data-digit='9'] { color: var(--digit-9); }
 body.numbers-colored .cell.invalid { color: #fee2e2; }
+body.numbers-colored .digit-chip__number[data-digit='1'] { color: var(--digit-1); }
+body.numbers-colored .digit-chip__number[data-digit='2'] { color: var(--digit-2); }
+body.numbers-colored .digit-chip__number[data-digit='3'] { color: var(--digit-3); }
+body.numbers-colored .digit-chip__number[data-digit='4'] { color: var(--digit-4); }
+body.numbers-colored .digit-chip__number[data-digit='5'] { color: var(--digit-5); }
+body.numbers-colored .digit-chip__number[data-digit='6'] { color: var(--digit-6); }
+body.numbers-colored .digit-chip__number[data-digit='7'] { color: var(--digit-7); }
+body.numbers-colored .digit-chip__number[data-digit='8'] { color: var(--digit-8); }
+body.numbers-colored .digit-chip__number[data-digit='9'] { color: var(--digit-9); }
 
 .face--front { transform: translate3d(0, 0, var(--face-depth)); }
 .face--back { transform: rotateY(180deg) translate3d(0, 0, var(--face-depth)); }
@@ -212,7 +242,25 @@ body.numbers-colored .cell.invalid { color: #fee2e2; }
 .face--bottom { transform: rotateX(-90deg) translate3d(0, 0, var(--face-depth)); }
 
 @media (max-width: 980px) {
-  .app-shell { grid-template-columns: 1fr; }
-  .cube-stage { min-height: 55vh; }
-  :root { --cube-size: min(82vw, 420px); }
+  .app-shell { grid-template-columns: 1fr; padding: 1rem; gap: 1rem; }
+  .intro-panel, .cube-stage { border-radius: 20px; }
+  .intro-panel { padding: 1.25rem; }
+  .cube-stage { min-height: 50vh; padding: .5rem; }
+  .scene { width: min(100%, calc(var(--cube-size) * 1.15)); height: min(72vw, calc(var(--cube-size) * 1.15)); }
+  .controls { gap: .55rem; }
+  button { width: 100%; }
+  .settings-heading, .tracker-heading { flex-direction: column; align-items: flex-start; }
+  .tracker-note { max-width: none; text-align: left; }
+  .digit-tracker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  :root { --cube-size: min(62vw, 280px); }
+}
+
+@media (max-width: 640px) {
+  :root { --cube-size: min(58vw, 240px); }
+  h1 { font-size: clamp(1.6rem, 8vw, 2.25rem); }
+  .cube-stage { min-height: 42vh; }
+  .scene { width: min(100%, calc(var(--cube-size) * 1.05)); height: min(64vw, calc(var(--cube-size) * 1.05)); }
+  .face-header { font-size: .72rem; top: .55rem; left: .55rem; }
+  .face-grid { margin-top: 1.65rem; gap: .25rem; }
+  .cell { border-radius: 10px; font-size: clamp(1rem, calc(var(--cube-size) / 8.5), 1.6rem); }
 }
