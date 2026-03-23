@@ -214,6 +214,7 @@ button:hover { transform: translateY(-1px); }
   position: relative;
   inset: auto;
   min-height: 0;
+  padding-top: .95rem;
   background: rgba(12, 25, 44, .52);
 }
 .face-header {
@@ -238,6 +239,16 @@ button:hover { transform: translateY(-1px); }
   gap: .35rem;
   align-self: stretch;
   margin-top: 1.9rem;
+}
+.slice-board .face-header {
+  position: static;
+  display: inline-flex;
+  justify-self: start;
+  margin-bottom: .75rem;
+  pointer-events: none;
+}
+.slice-board .face-grid {
+  margin-top: 0;
 }
 .cell {
   width: 100%;
