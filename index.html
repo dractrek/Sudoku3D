@@ -9,12 +9,12 @@
   <body>
     <main class="app-shell">
       <section class="intro-panel">
-        <p class="eyebrow">Dractrek · Games</p>
-        <h1>Sudoku 3D sobre un cub</h1>
+        <p class="eyebrow">AIRobot · Prototype v2</p>
+        <h1>Sudoku 3D sobre un cub 3×3×3</h1>
         <p>
-          Aquest joc mostra un cub interactiu on cada cara exterior és un
-          sudoku/làmina 3×3 amb els números de l'<strong>1 al 9</strong>. Cada petit cub conserva
-          el mateix valor a totes les cares visibles, de manera que cantonades i arestes comparteixen número.
+          Aquesta versió mostra el cub exterior i també els <strong>3 talls centrals</strong>.
+          Ara es pot comprovar millor que cada cara exterior i cada pla central treballen com a
+          sudokus/làmines 3×3 amb els números de l'<strong>1 al 9</strong>.
         </p>
         <div class="feature-list">
           <article>
@@ -23,14 +23,14 @@
               <li>Arrossega amb el ratolí o el dit per girar el cub en 3D.</li>
               <li>Fes clic sobre una casella buida i escriu un número del 1 al 9.</li>
               <li>El mateix número es replica automàticament a les altres cares del mateix cubet.</li>
-              <li>Cada partida nova baralla els números inicials i també la solució base.</li>
+              <li>Els tres talls centrals mostren els plans interns, inclòs el cub central ocult.</li>
             </ul>
           </article>
           <article>
-            <h2>Pensat per a la v2</h2>
+            <h2>Nova base per a la v2</h2>
             <p>
-              El motor intern ja treballa amb coordenades <code>(x, y, z)</code> dels 27 cubets. Això permet afegir,
-              en una següent fase, els tres plans interns que passen pel centre sense haver de refer la base del joc.
+              El motor intern ja treballa amb els <code>27</code> cubets complets del cub, també els interns.
+              Això permet validar els tres plans centrals i representar el cub del centre fora de l'escena 3D.
             </p>
           </article>
         </div>
@@ -55,6 +55,37 @@
               <input id="color-numbers-toggle" type="checkbox" checked />
             </label>
           </div>
+        </section>
+
+        <section class="tracker-panel" aria-labelledby="tracker-title">
+          <div class="settings-heading tracker-heading">
+            <div>
+              <p class="eyebrow">Progress</p>
+              <h2 id="tracker-title">Seguiment dels números</h2>
+            </div>
+            <p class="tracker-note">Cada número pot aparèixer 9 vegades: 6 cares externes + 3 plans centrals.</p>
+          </div>
+          <div id="digit-tracker" class="digit-tracker" aria-live="polite"></div>
+        </section>
+
+        <section class="slices-panel" aria-labelledby="slices-title">
+          <div class="settings-heading tracker-heading">
+            <div>
+              <p class="eyebrow">Inner slices</p>
+              <h2 id="slices-title">Talls centrals</h2>
+            </div>
+            <p class="tracker-note">Els 3 plans del mig també són 3×3 i comparteixen el mateix cub central ocult.</p>
+          </div>
+
+          <div class="core-panel">
+            <div>
+              <strong>Cub central ocult</strong>
+              <small>És el mateix valor al centre dels tres plans.</small>
+            </div>
+            <div id="core-anchor" class="core-anchor"></div>
+          </div>
+
+          <div id="slice-boards" class="slice-boards"></div>
         </section>
 
         <div class="controls">
@@ -86,7 +117,7 @@
     </main>
 
     <template id="face-template">
-      <section class="face">
+      <section class="face-board">
         <span class="face-header"></span>
         <div class="face-grid"></div>
       </section>

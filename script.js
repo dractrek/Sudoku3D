@@ -7,6 +7,9 @@ const settingsContent = document.getElementById('settings-content');
 const toggleSettingsButton = document.getElementById('toggle-settings');
 const colorNumbersToggle = document.getElementById('color-numbers-toggle');
 const newGameButton = document.getElementById('new-game');
+const digitTrackerElement = document.getElementById('digit-tracker');
+const sliceBoardsElement = document.getElementById('slice-boards');
+const coreAnchorElement = document.getElementById('core-anchor');
 
 const faceConfigs = [
   { key: 'front', label: 'Davant', className: 'face--front', coords: (row, col) => ({ x: col, y: row, z: 2 }) },
@@ -17,12 +20,19 @@ const faceConfigs = [
   { key: 'bottom', label: 'Inferior', className: 'face--bottom', coords: (row, col) => ({ x: col, y: 2, z: 2 - row }) },
 ];
 
-const isVisible = ({ x, y, z }) => x === 0 || x === 2 || y === 0 || y === 2 || z === 0 || z === 2;
+const sliceConfigs = [
+  { key: 'slice-x', label: 'Tall central X', description: 'Pla esquerra-dreta del mig', coords: (row, col) => ({ x: 1, y: row, z: col }) },
+  { key: 'slice-y', label: 'Tall central Y', description: 'Pla superior-inferior del mig', coords: (row, col) => ({ x: col, y: 1, z: row }) },
+  { key: 'slice-z', label: 'Tall central Z', description: 'Pla davant-darrere del mig', coords: (row, col) => ({ x: col, y: row, z: 1 }) },
+];
+
+const validationGroups = [...faceConfigs, ...sliceConfigs];
+const visibleFaceKeys = new Set(faceConfigs.map((config) => config.key));
 const cubelets = [];
+
 for (let x = 0; x < 3; x += 1) {
   for (let y = 0; y < 3; y += 1) {
     for (let z = 0; z < 3; z += 1) {
-      if (!isVisible({ x, y, z })) continue;
       const id = `${x}${y}${z}`;
       cubelets.push({ id, x, y, z, solution: '', value: '', fixed: false });
     }
@@ -76,22 +86,39 @@ function createDigitMap() {
   return new Map(digits.map((digit, index) => [index + 1, digit]));
 }
 
-function generateFixedIds() {
-  const shuffledIds = shuffle(cubelets.map((cubelet) => cubelet.id));
-  const fixedTarget = 14;
-  const selected = new Set(shuffledIds.slice(0, fixedTarget));
-
-  faceConfigs.forEach((faceConfig) => {
-    const faceIds = [];
-    for (let row = 0; row < 3; row += 1) {
-      for (let col = 0; col < 3; col += 1) {
-        faceIds.push(cubeletId(faceConfig.coords(row, col)));
-      }
+function coordsForBoard(boardConfig) {
+  const coords = [];
+  for (let row = 0; row < 3; row += 1) {
+    for (let col = 0; col < 3; col += 1) {
+      coords.push(boardConfig.coords(row, col));
     }
+  }
+  return coords;
+}
 
-    const fixedOnFace = faceIds.filter((id) => selected.has(id)).length;
-    if (fixedOnFace < 3) {
-      shuffle(faceIds.filter((id) => !selected.has(id))).slice(0, 3 - fixedOnFace).forEach((id) => selected.add(id));
+function generateFixedIds() {
+  const visibleIds = new Set();
+  faceConfigs.forEach((faceConfig) => {
+    coordsForBoard(faceConfig).forEach((coords) => visibleIds.add(cubeletId(coords)));
+  });
+
+  const internalFocusIds = new Set();
+  sliceConfigs.forEach((sliceConfig) => {
+    coordsForBoard(sliceConfig).forEach((coords) => {
+      const id = cubeletId(coords);
+      if (!visibleIds.has(id) || id === '111') internalFocusIds.add(id);
+    });
+  });
+
+  const selected = new Set(shuffle([...visibleIds]).slice(0, 14));
+  shuffle([...internalFocusIds]).slice(0, 4).forEach((id) => selected.add(id));
+  selected.add('111');
+
+  validationGroups.forEach((boardConfig) => {
+    const boardIds = coordsForBoard(boardConfig).map(cubeletId);
+    const fixedOnBoard = boardIds.filter((id) => selected.has(id)).length;
+    if (fixedOnBoard < 3) {
+      shuffle(boardIds.filter((id) => !selected.has(id))).slice(0, 3 - fixedOnBoard).forEach((id) => selected.add(id));
     }
   });
 
@@ -110,63 +137,131 @@ function applyNewGame() {
   });
 
   validateBoard();
-  statusElement.textContent = 'Nova partida creada: els números inicials i la solució s’han barallat.';
+  statusElement.textContent = 'Nova partida creada: cares externes i talls centrals s’han regenerat amb una combinació nova.';
   statusElement.style.color = 'var(--accent)';
 }
 
-function renderFaces() {
-  faceConfigs.forEach((faceConfig) => {
-    const faceNode = faceTemplate.content.firstElementChild.cloneNode(true);
-    faceNode.classList.add(faceConfig.className);
-    faceNode.dataset.face = faceConfig.key;
-    faceNode.querySelector('.face-header').textContent = faceConfig.label;
+function createInputForCubelet(cubelet, label, boardKey, extraClassName = '') {
+  const input = document.createElement('input');
+  input.className = `cell ${extraClassName}`.trim();
+  input.type = 'text';
+  input.inputMode = 'numeric';
+  input.maxLength = 1;
+  input.dataset.cubeletId = cubelet.id;
+  input.dataset.fixed = String(cubelet.fixed);
+  input.dataset.board = boardKey;
+  input.value = cubelet.value;
+  input.disabled = cubelet.fixed;
+  updateCellAppearance(input, cubelet.value);
+  input.setAttribute('aria-label', label);
 
-    const grid = faceNode.querySelector('.face-grid');
-    for (let row = 0; row < 3; row += 1) {
-      for (let col = 0; col < 3; col += 1) {
-        const coords = faceConfig.coords(row, col);
-        const cubelet = cubeletMap.get(cubeletId(coords));
-        const input = document.createElement('input');
-        input.className = 'cell';
-        input.type = 'text';
-        input.inputMode = 'numeric';
-        input.maxLength = 1;
-        input.dataset.cubeletId = cubelet.id;
-        input.dataset.fixed = String(cubelet.fixed);
-        input.dataset.face = faceConfig.key;
-        input.value = cubelet.value;
-        input.disabled = cubelet.fixed;
-        updateCellAppearance(input, cubelet.value);
-        input.setAttribute('aria-label', `${faceConfig.label} fila ${row + 1} columna ${col + 1}`);
-
-        input.addEventListener('input', (event) => {
-          const raw = event.target.value.replace(/[^1-9]/g, '').slice(-1);
-          cubelet.value = raw;
-          syncCubelet(cubelet);
-          validateBoard();
-        });
-
-        registerCell(cubelet, input);
-        grid.appendChild(input);
-      }
-    }
-
-    cubeElement.appendChild(faceNode);
+  input.addEventListener('input', (event) => {
+    const raw = event.target.value.replace(/[^1-9]/g, '').slice(-1);
+    cubelet.value = raw;
+    syncCubelet(cubelet);
+    validateBoard();
   });
+
+  registerCell(cubelet, input);
+  return input;
 }
 
-function getFaceValues(faceConfig) {
+function renderBoard(boardConfig, mountElement, boardClassName = 'face-board') {
+  const boardNode = faceTemplate.content.firstElementChild.cloneNode(true);
+  boardNode.className = boardClassName;
+  if (boardConfig.className) boardNode.classList.add(boardConfig.className);
+  boardNode.dataset.board = boardConfig.key;
+  boardNode.querySelector('.face-header').textContent = boardConfig.label;
+
+  const grid = boardNode.querySelector('.face-grid');
+  for (let row = 0; row < 3; row += 1) {
+    for (let col = 0; col < 3; col += 1) {
+      const coords = boardConfig.coords(row, col);
+      const cubelet = cubeletMap.get(cubeletId(coords));
+      const input = createInputForCubelet(
+        cubelet,
+        `${boardConfig.label} fila ${row + 1} columna ${col + 1}`,
+        boardConfig.key,
+        visibleFaceKeys.has(boardConfig.key) ? '' : 'cell--slice'
+      );
+      grid.appendChild(input);
+    }
+  }
+
+  mountElement.appendChild(boardNode);
+}
+
+function renderFaces() {
+  faceConfigs.forEach((faceConfig) => renderBoard(faceConfig, cubeElement));
+}
+
+function renderSliceBoards() {
+  sliceConfigs.forEach((sliceConfig) => {
+    const wrapper = document.createElement('article');
+    wrapper.className = 'slice-card';
+
+    const description = document.createElement('p');
+    description.className = 'slice-card__description';
+    description.textContent = sliceConfig.description;
+    wrapper.appendChild(description);
+
+    renderBoard(sliceConfig, wrapper, 'slice-board');
+    sliceBoardsElement.appendChild(wrapper);
+  });
+
+  const coreCubelet = cubeletMap.get('111');
+  const coreInput = createInputForCubelet(coreCubelet, 'Cub central ocult', 'core-anchor', 'core-cell');
+  coreAnchorElement.appendChild(coreInput);
+}
+
+function getBoardValues(boardConfig) {
   const values = [];
   for (let row = 0; row < 3; row += 1) {
     for (let col = 0; col < 3; col += 1) {
-      const cubelet = cubeletMap.get(cubeletId(faceConfig.coords(row, col)));
+      const cubelet = cubeletMap.get(cubeletId(boardConfig.coords(row, col)));
       values.push(cubelet.value);
     }
   }
   return values;
 }
 
+function getDigitUsage() {
+  const counts = new Map(Array.from({ length: 9 }, (_, index) => [String(index + 1), 0]));
+
+  validationGroups.forEach((boardConfig) => {
+    getBoardValues(boardConfig).forEach((value) => {
+      if (!value) return;
+      const key = String(value);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+  });
+
+  return counts;
+}
+
+function renderDigitTracker() {
+  const usage = getDigitUsage();
+  digitTrackerElement.innerHTML = '';
+
+  Array.from({ length: 9 }, (_, index) => String(index + 1)).forEach((digit) => {
+    const count = usage.get(digit) ?? 0;
+    const remaining = Math.max(0, 9 - count);
+    const chip = document.createElement('article');
+    chip.className = 'digit-chip';
+    if (count >= 9) chip.classList.add('is-complete');
+    chip.innerHTML = `
+      <div class="digit-chip__top">
+        <span class="digit-chip__number" data-digit="${digit}">${digit}</span>
+        <span class="digit-chip__count">${count}/9</span>
+      </div>
+      <span class="digit-chip__status">${remaining === 0 ? 'Complet' : `Falten ${remaining}`}</span>
+    `;
+    digitTrackerElement.appendChild(chip);
+  });
+}
+
 function validateBoard() {
+  renderDigitTracker();
   cellRegistry.forEach((cells) => cells.forEach((cell) => {
     cell.dataset.invalid = 'false';
     cell.classList.remove('invalid');
@@ -175,9 +270,9 @@ function validateBoard() {
   let hasConflicts = false;
   let complete = true;
 
-  faceConfigs.forEach((faceConfig) => {
+  validationGroups.forEach((boardConfig) => {
     const seen = new Map();
-    getFaceValues(faceConfig).forEach((value, index) => {
+    getBoardValues(boardConfig).forEach((value, index) => {
       if (!value) {
         complete = false;
         return;
@@ -194,7 +289,7 @@ function validateBoard() {
       indices.forEach((flatIndex) => {
         const row = Math.floor(flatIndex / 3);
         const col = flatIndex % 3;
-        const cubelet = cubeletMap.get(cubeletId(faceConfig.coords(row, col)));
+        const cubelet = cubeletMap.get(cubeletId(boardConfig.coords(row, col)));
         (cellRegistry.get(cubelet.id) ?? []).forEach((cell) => {
           cell.dataset.invalid = 'true';
           cell.classList.add('invalid');
@@ -204,16 +299,16 @@ function validateBoard() {
   });
 
   if (hasConflicts) {
-    statusElement.textContent = 'Hi ha números repetits en alguna cara.';
+    statusElement.textContent = 'Hi ha números repetits en alguna cara exterior o en algun tall central.';
     statusElement.style.color = 'var(--warn)';
   } else if (complete && cubelets.every((cubelet) => String(cubelet.value) === String(cubelet.solution))) {
-    statusElement.textContent = 'Perfecte! Has resolt el cub Sudoku 3D.';
+    statusElement.textContent = 'Perfecte! Has resolt les cares externes, els tres talls centrals i el cub central ocult.';
     statusElement.style.color = 'var(--good)';
   } else if (complete) {
-    statusElement.textContent = 'Totes les cares tenen 1-9, però encara no coincideixen amb la solució prototip.';
+    statusElement.textContent = 'Tots els plans tenen 1-9, però encara no coincideixen amb la solució completa del prototip.';
     statusElement.style.color = 'var(--accent)';
   } else {
-    statusElement.textContent = 'Completa les caselles buides i comprova que cada cara contingui els números 1-9 sense repetir.';
+    statusElement.textContent = 'Completa les cares i els talls centrals assegurant que cada làmina 3×3 contingui els números 1-9 sense repetir.';
     statusElement.style.color = 'var(--muted)';
   }
 }
@@ -232,6 +327,7 @@ function toggleSettings() {
 }
 
 renderFaces();
+renderSliceBoards();
 bodyElement.classList.add('numbers-colored');
 applyNewGame();
 
