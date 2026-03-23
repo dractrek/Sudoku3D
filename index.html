@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ca">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sudoku 3D Cube · AIRobot</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="intro-panel">
+        <p class="eyebrow">Dractrek · Games</p>
+        <h1>Sudoku 3D sobre un cub</h1>
+        <p>
+          Aquest joc mostra un cub interactiu on cada cara exterior és un
+          sudoku/làmina 3×3 amb els números de l'<strong>1 al 9</strong>. Cada petit cub conserva
+          el mateix valor a totes les cares visibles, de manera que cantonades i arestes comparteixen número.
+        </p>
+        <div class="feature-list">
+          <article>
+            <h2>Com es juga</h2>
+            <ul>
+              <li>Arrossega amb el ratolí o el dit per girar el cub en 3D.</li>
+              <li>Fes clic sobre una casella buida i escriu un número del 1 al 9.</li>
+              <li>El mateix número es replica automàticament a les altres cares del mateix cubet.</li>
+              <li>Cada partida nova baralla els números inicials i també la solució base.</li>
+            </ul>
+          </article>
+          <article>
+            <h2>Pensat per a la v2</h2>
+            <p>
+              El motor intern ja treballa amb coordenades <code>(x, y, z)</code> dels 27 cubets. Això permet afegir,
+              en una següent fase, els tres plans interns que passen pel centre sense haver de refer la base del joc.
+            </p>
+          </article>
+        </div>
+
+        <section class="settings-panel" aria-labelledby="settings-title">
+          <div class="settings-heading">
+            <div>
+              <p class="eyebrow">Settings</p>
+              <h2 id="settings-title">Opcions del joc</h2>
+            </div>
+            <button id="toggle-settings" type="button" class="secondary-button" aria-expanded="true">
+              Amaga opcions
+            </button>
+          </div>
+
+          <div id="settings-content" class="settings-content">
+            <label class="setting-row" for="color-numbers-toggle">
+              <span>
+                <strong>Colors fixos per número</strong>
+                <small>Cada número del 1 al 9 tindrà sempre el mateix color.</small>
+              </span>
+              <input id="color-numbers-toggle" type="checkbox" checked />
+            </label>
+          </div>
+        </section>
+
+        <div class="controls">
+          <button id="new-game" type="button">Nova partida</button>
+          <button id="reset-view" type="button">Reinicia la vista</button>
+          <button id="check-board" type="button">Comprova</button>
+          <button id="fill-solution" type="button">Mostra la solució</button>
+        </div>
+        <p id="status" class="status" aria-live="polite"></p>
+        <div class="legend">
+          <span><i class="swatch fixed"></i> Valor inicial</span>
+          <span><i class="swatch editable"></i> Casella editable</span>
+          <span><i class="swatch invalid"></i> Conflicte</span>
+          <span><i class="swatch colorful"></i> Número amb color</span>
+        </div>
+
+        <footer class="credits">
+          <p class="credits-title">Dractrek Games</p>
+          <p>Ramon Sanromà Aragonés</p>
+          <p>made with OpenAI Codex</p>
+        </footer>
+      </section>
+
+      <section class="cube-stage" aria-label="Sudoku 3D">
+        <div class="scene" id="scene">
+          <div class="cube" id="cube"></div>
+        </div>
+      </section>
+    </main>
+
+    <template id="face-template">
+      <section class="face">
+        <span class="face-header"></span>
+        <div class="face-grid"></div>
+      </section>
+    </template>
+
+    <script src="script.js"></script>
+  </body>
+</html>
